@@ -14,34 +14,35 @@ class NonTransitiveDiceGame {
     const userFirst = firstMove === 1;
     console.log(userFirst ? 'You make the first move!' : 'I make the first move!');
 
-    const firstPlayerDice = await this.chooseDice(userFirst);
-    const secondPlayerDice = await this.chooseDice(!userFirst, firstPlayerDice);
+    const userDice = await this.chooseUserDice();
+    const computerDice = this.chooseComputerDice(userDice);
+
+    console.log(`You selected dice: ${userDice.values.join(',')}`);
+    console.log(`I selected dice: ${computerDice.values.join(',')}`);
 
     console.log("It's time for throws.");
 
-    const firstThrow = await this.throwDice(firstPlayerDice);
-    const secondThrow = await this.throwDice(secondPlayerDice);
+    const userThrow = await this.throwDice(userDice);
+    const computerThrow = await this.throwDice(computerDice);
 
-    console.log(`Your throw: ${firstThrow}. My throw: ${secondThrow}.`);
+    console.log(`Your throw: ${userThrow}. My throw: ${computerThrow}.`);
 
-    if (firstThrow > secondThrow) {
+    if (userThrow > computerThrow) {
       console.log('You win!');
-    } else if (firstThrow < secondThrow) {
+    } else if (userThrow < computerThrow) {
       console.log('I win!');
     } else {
-      console.log('It\'s a draw!');
+      console.log("It's a draw!");
     }
   }
 
-  async chooseDice(isUser, excludedDice) {
+  async chooseUserDice() {
     const prompt = require('prompt-sync')();
     let selection;
     do {
       console.log('Choose your dice:');
       this.dice.forEach((d, i) => {
-        if (d !== excludedDice) {
-          console.log(`${i} - ${d.values.join(',')}`);
-        }
+        console.log(`${i} - ${d.values.join(',')}`);
       });
       console.log('X - exit');
       console.log('? - help');
@@ -49,9 +50,15 @@ class NonTransitiveDiceGame {
       selection = prompt('Your selection: ');
       if (selection === 'X') process.exit(0);
       if (selection === '?') HelpTable.display(this.dice, ProbabilityCalculator.calculate(this.dice));
-    } while (!/^[0-9]+$/.test(selection) || Number(selection) >= this.dice.length || this.dice[Number(selection)] === excludedDice);
+    } while (!/^[0-9]+$/.test(selection) || Number(selection) >= this.dice.length);
 
     return this.dice[Number(selection)];
+  }
+
+  chooseComputerDice(userDice) {
+    const remainingDice = this.dice.filter(d => d !== userDice);
+    const randomIndex = Math.floor(Math.random() * remainingDice.length);
+    return remainingDice[randomIndex];
   }
 
   async throwDice(dice) {
